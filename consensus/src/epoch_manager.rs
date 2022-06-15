@@ -3,6 +3,7 @@
 
 use crate::quorum_store::quorum_store::{QuorumStore, QuorumStoreCommand, QuorumStoreConfig};
 use crate::quorum_store::quorum_store_db::QuorumStoreDB;
+use crate::quorum_store::quorum_store_wrapper::QuorumStoreWrapper;
 use crate::{
     block_storage::BlockStore,
     commit_notifier::CommitNotifier,
@@ -320,6 +321,18 @@ impl EpochManager {
         Ok(())
     }
 
+    fn spawn_direct_mempool_quorum_store(
+        &mut self,
+        consensus_to_quorum_store_receiver: Receiver<ConsensusRequest>,
+    ) {
+        let quorum_store = DirectMempoolQuorumStore::new(
+            consensus_to_quorum_store_receiver,
+            self.quorum_store_to_mempool_sender.clone(),
+            self.config.mempool_txn_pull_timeout_ms,
+        );
+        tokio::spawn(quorum_store.start());
+    }
+
     ///this function spawns QuorumStore
     fn spawn_quorum_store(
         &mut self,
@@ -406,7 +419,7 @@ impl EpochManager {
         &mut self,
         consensus_to_quorum_store_receiver: Receiver<ConsensusRequest>,
     ) {
-        let quorum_store_wrapper = DirectMempoolQuorumStore::new(
+        let quorum_store_wrapper = QuorumStoreWrapper::new(
             consensus_to_quorum_store_receiver,
             self.quorum_store_to_mempool_sender.clone(),
             self.config.mempool_txn_pull_timeout_ms,
@@ -533,15 +546,19 @@ impl EpochManager {
 
         let safety_rules_container = Arc::new(Mutex::new(safety_rules));
 
-        //TODO: create channels between quorum_store, execution, and wrapper and pass around.
-        let (_wrapper_quorum_store_tx, wrapper_quorum_store_rx) = tokio::sync::mpsc::channel(100);
-
-        //Start QuorumStore
-        self.spawn_quorum_store(epoch_state.verifier.clone(), wrapper_quorum_store_rx);
-
+        // Start QuorumStore
         let (consensus_to_quorum_store_sender, consensus_to_quorum_store_receiver) =
             mpsc::channel(self.config.intra_consensus_channel_buffer_size);
-        self.spawn_quorum_wrapper(consensus_to_quorum_store_receiver);
+        if self.config.use_quorum_store {
+            //TODO: create channels between quorum_store, execution, and wrapper and pass around.
+            let (_wrapper_quorum_store_tx, wrapper_quorum_store_rx) =
+                tokio::sync::mpsc::channel(100);
+            self.spawn_quorum_store(epoch_state.verifier.clone(), wrapper_quorum_store_rx);
+            self.spawn_quorum_wrapper(consensus_to_quorum_store_receiver);
+        } else {
+            self.spawn_direct_mempool_quorum_store(consensus_to_quorum_store_receiver);
+        }
+
         let payload_manager = QuorumStoreClient::new(
             consensus_to_quorum_store_sender.clone(),
             self.config.quorum_store_poll_count,
