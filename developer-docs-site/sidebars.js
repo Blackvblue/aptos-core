@@ -69,7 +69,7 @@ const sidebars = {
         "tutorials/local-testnet-devnet-incentivized-testnet",
         {
           type: "category",
-          label: "Local Testnet and Devnet",
+          label: "Node Installation",
           collapsible: true,
           collapsed: true,
           items: [
@@ -102,6 +102,7 @@ const sidebars = {
             "reference/node-liveness-criteria",
           ],
         },
+        "nodes/staking/staking-on-aptos",
       ],
     },
     "reference/telemetry",

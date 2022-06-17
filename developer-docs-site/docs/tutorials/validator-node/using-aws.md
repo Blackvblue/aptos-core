@@ -1,79 +1,93 @@
 ---
-title: "Run Validator Node Using AWS"
+title: "Using AWS"
 slug: "run-validator-node-using-aws"
 sidebar_position: 11
 ---
 
-## Run on AWS
-This guide assumes you already have AWS account setup.
+This is a step-by-step guide to install an Aptos node on AWS.
 
-Install pre-requisites if needed:
+## Before you proceed
 
-   * Aptos CLI: https://github.com/aptos-labs/aptos-core/blob/main/crates/aptos/README.md
-   * Terraform 1.1.7: https://www.terraform.io/downloads.html
-   * Kubernetes CLI: https://kubernetes.io/docs/tasks/tools/
-   * AWS CLI: https://aws.amazon.com/cli/
+Make sure you complete these pre-requisite steps before you proceed:
 
-1. Create a working directory for your configuration.
+1. Set up your AWS account. 
+2. Make sure the following are installed on your local computer:
 
-    * Choose a workspace name e.g. `testnet`. Note: This defines Terraform workspace name, which in turn is used to form resource names.
+   * **Aptos CLI**: https://github.com/aptos-labs/aptos-core/blob/main/crates/aptos/README.md
+   * **Terraform 1.1.7**: https://www.terraform.io/downloads.html
+   * **Kubernetes CLI**: https://kubernetes.io/docs/tasks/tools/
+   * **AWS CLI**: https://aws.amazon.com/cli/
+
+## Install
+
+1. Create a working directory for your node configuration.
+
+    * Choose a workspace name, for example, `testnet`. **Note**: This defines the Terraform workspace name, which, in turn, is used to form the resource names.
+
+      ```
+      export WORKSPACE=testnet
+      ```
+
+    * Create a directory for the workspace.
+
+      ```
+      mkdir -p ~/$WORKSPACE
+      ```
+
+2. Create an S3 storage bucket for storing the Terraform state on AWS. You can do this on the AWS UI or by the below command: 
+
+      ```
+      aws s3api create-bucket --bucket <bucket name> --region <region name>
+      ```
+
+3. Create a Terraform file called `main.tf` in your working directory:
+
     ```
-    export WORKSPACE=testnet
+    cd ~/$WORKSPACE
+    vi main.tf
     ```
 
-    * Create a directory for the workspace
-    ```
-    mkdir -p ~/$WORKSPACE
-    ```
-
-2. Create a S3 storage bucket for storing the Terraform state on AWS, you can do this on AWS UI or by the command: 
+4. Modify the `main.tf` file to configure Terraform and to create Aptos FullNode from the Terraform module. See below example content for `main.tf`:
 
     ```
-    aws s3api create-bucket --bucket <bucket name> --region <region name>
-    ```
+    terraform {
+      required_version = "~> 1.1.0"
+      backend "s3" {
+        bucket = "terraform.aptos-node"
+        key    = "state/aptos-node"
+        region = <aws region>
+      }
+    }
 
-3. Create Terraform file called `main.tf` in your working directory:
-  ```
-  cd ~/$WORKSPACE
-  vi main.tf
-  ```
-
-4. Modify `main.tf` file to configure Terraform, and create fullnode from Terraform module. Example content for `main.tf`:
-  ```
-  terraform {
-    required_version = "~> 1.1.0"
-    backend "s3" {
-      bucket = "terraform.aptos-node"
-      key    = "state/aptos-node"
+    provider "aws" {
       region = <aws region>
     }
-  }
 
-  provider "aws" {
-    region = <aws region>
-  }
+    module "aptos-node" {
+      # download Terraform module from aptos-labs/aptos-core repo
+      source        = "github.com/aptos-labs/aptos-core.git//terraform/aptos-node/aws?ref=main"
+      region        = <aws region>  # Specify the region
+      # zone_id     = "<Route53 zone id>"  # zone id for Route53 if you want to use DNS
+      era           = 1              # bump era number to wipe the chain
+      chain_id      = 23
+      image_tag     = "testnet" # Specify the docker image tag to use
+      validator_name = "<Name of Your Validator>"
+    }
+    ```
 
-  module "aptos-node" {
-    # download Terraform module from aptos-labs/aptos-core repo
-    source        = "github.com/aptos-labs/aptos-core.git//terraform/aptos-node/aws?ref=main"
-    region        = <aws region>  # Specify the region
-    # zone_id     = "<Route53 zone id>"  # zone id for Route53 if you want to use DNS
-    era           = 1              # bump era number to wipe the chain
-    chain_id      = 23
-    image_tag     = "testnet" # Specify the docker image tag to use
-    validator_name = "<Name of Your Validator>"
-  }
-  ```
+    For full customization options, see:
+      - The Terraform variables file [https://github.com/aptos-labs/aptos-core/blob/main/terraform/aptos-node/aws/variables.tf](https://github.com/aptos-labs/aptos-core/blob/main/terraform/aptos-node/aws/variables.tf), and 
+      - The values YAML file [https://github.com/aptos-labs/aptos-core/blob/main/terraform/helm/aptos-node/values.yaml](https://github.com/aptos-labs/aptos-core/blob/main/terraform/helm/aptos-node/values.yaml).
 
-    For the full customization options, see the variables file [here](https://github.com/aptos-labs/aptos-core/blob/main/terraform/aptos-node/aws/variables.tf), and the [helm values](https://github.com/aptos-labs/aptos-core/blob/main/terraform/helm/aptos-node/values.yaml).
+5. Initialize Terraform in the `$WORKSPACE` directory where you created the `main.tf` file.
 
-5. Initialize Terraform in the same directory of your `main.tf` file
   ```
   terraform init
   ```
-This will download all the terraform dependencies for you, in the `.terraform` folder in your current working directory.
+This will download all the Terraform dependencies into the `.terraform` folder in your current working directory.
 
 6. Create a new Terraform workspace to isolate your environments:
+
   ```
   terraform workspace new $WORKSPACE
   # This command will list all workspaces
@@ -81,12 +95,14 @@ This will download all the terraform dependencies for you, in the `.terraform` f
   ```
 
 7. Apply the configuration.
+
   ```
   terraform apply
   ```
-  This might take a while to finish (~20 minutes), Terraform will create all the resources on your cloud account.
 
-8. Once terraform apply finishes, you can check if those resources are created:
+  This may take a while to finish (~20 minutes). Terraform will create all the resources on your AWS cloud account.
+
+8. After `terraform apply` finishes, you can check if those resources are created:
 
     - `aws eks update-kubeconfig --name aptos-$WORKSPACE` to configure access for your k8s cluster.
     - `kubectl get pods` this should have haproxy, validator and fullnode. with validator and fullnode pod `pending` (require further action in later steps)
