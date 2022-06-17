@@ -98,9 +98,9 @@ impl UnverifiedEvent {
                 b.verify(validator)?;
                 VerifiedEvent::Batch(b)
             }
-            UnverifiedEvent::ProofOfStoreBroadcast(pos) => {
-                pos.verify(validator)?;
-                VerifiedEvent::ProofOfStoreBroadcast(pos)
+            UnverifiedEvent::ProofOfStoreBroadcast(p) => {
+                p.verify(validator)?;
+                VerifiedEvent::ProofOfStoreBroadcast(p)
             }
         })
     }
@@ -115,7 +115,7 @@ impl UnverifiedEvent {
             UnverifiedEvent::SignedDigest(sd) => sd.epoch(),
             UnverifiedEvent::Fragment(f) => f.epoch(),
             UnverifiedEvent::Batch(b) => b.epoch(),
-            UnverifiedEvent::ProofOfStoreBroadcast(pos) => pos.epoch(),
+            UnverifiedEvent::ProofOfStoreBroadcast(p) => p.epoch(),
         }
     }
 }
@@ -131,7 +131,7 @@ impl From<ConsensusMsg> for UnverifiedEvent {
             ConsensusMsg::SignedDigestMsg(sd) => UnverifiedEvent::SignedDigest(sd),
             ConsensusMsg::FragmentMsg(f) => UnverifiedEvent::Fragment(f),
             ConsensusMsg::BatchMsg(b) => UnverifiedEvent::Batch(b),
-            ConsensusMsg::ProofOfStoreBroadcast(pos) => UnverifiedEvent::ProofOfStoreBroadcast(pos),
+            ConsensusMsg::ProofOfStoreBroadcastMsg(p) => UnverifiedEvent::ProofOfStoreBroadcast(p),
             _ => unreachable!("Unexpected conversion"),
         }
     }

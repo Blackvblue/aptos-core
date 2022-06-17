@@ -71,7 +71,7 @@ pub enum ConsensusMsg {
     /// TODO
     FragmentMsg(Box<Fragment>),
     /// TODO
-    ProofOfStoreBroadcast(Box<ProofOfStore>),
+    ProofOfStoreBroadcastMsg(Box<ProofOfStore>),
 }
 
 /// The interface from Network to Consensus layer.
