@@ -9,7 +9,9 @@ thinner_content: true
 no_pad_top: false
 ---
 
-**PLACEHOLDER LANDING PAGE**
+<p class="card-section-h2">Welcome to AIT-2</p>
+
+To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the below steps. Use these steps as a checklist to keep track of your progress. A detailed documentation for each step is provided.
 
  <div class="timeline">
 <div class="step">
@@ -17,8 +19,8 @@ no_pad_top: false
         <div class="circle">1</div>
     </div>
     <div>
-        <div class="step-title">Cerebras SIF container</div>
-        <div class="step-caption">The Cerebras <a class="reference external" href="https://sylabs.io/guides/3.7/user-guide/">Singularity</a> container (SIF) is installed on all the nodes, including the chief and the worker nodes, and on the network attached CS system. This container consists of the Cerebras Graph Compiler (CGC) and other necessary software. </div>
+        <div class="step-title">Join the Aptos Discord community</div>
+        <div class="step-caption">Visit the <a class="reference external" href="https://community.aptoslabs.com/">Aptos Community page</a> and join.  </div>
     </div>
 </div>
 <div class="step">
@@ -26,8 +28,8 @@ no_pad_top: false
         <div class="circle">2</div>
     </div>
     <div>
-        <div class="step-title">Slurm orchestrator</div>
-        <div class="step-caption">The orchestrator software <a class="reference external" href="https://slurm.schedmd.com/quickstart.html">Slurm</a> is installed and is running on all the CPU nodes: on the chief node and on all the worker nodes. The coordination between the CS system and the nodes in the CS cluster is performed by the orchestrator software Slurm. </div>
+        <div class="step-title">Install the node and start the node in Test mode</div>
+        <div class="step-caption">Follow the detailed node installation steps in the below section: <a href="http://localhost:3000/tutorials/validator-node/index#setting-up-a-node-for-ait-2">Setting up a node for AIT-2</a>. <strong>Make sure to set your node in the Test mode.</strong> Instructions are provided in the node installation sections. </div>
     </div>
 </div>
 <div class="step">
@@ -35,8 +37,8 @@ no_pad_top: false
         <div class="circle">3</div>
     </div>
     <div>
-        <div class="step-title">Hostnames</div>
-        <div class="step-caption">You have the hostnames of the chief and the worker nodes. You will login to the chief node and perform all your work on the chief node. You will need hostnames of the worker nodes for debugging. </div>
+        <div class="step-title">Provide your node details to the Aptos Discord community</div>
+        <div class="step-caption">Provide your account address, your public keys, and your node's network addresses. Optionally, you can also provide your FullNode details. </div>
     </div>
 </div>
 <div class="step">
@@ -44,8 +46,8 @@ no_pad_top: false
         <div class="circle">4</div>
     </div>
     <div>
-        <div class="step-title">IP address of CS system</div>
-        <div class="step-caption">You have the IP address and the port number of the network attached CS system accelerator. You will pass this IP address and port number to the <code class="docutils literal notranslate"><span class="pre">--cs_ip</span></code> flag of your runtime scripts during compiling and running your models. </div>
+        <div class="step-title">If your node passes healthcheck, then complete the KYC process</div>
+        <div class="step-caption">When Aptos confirms that your node is healthy, you will be asked to complete the KYC process. </div>
     </div>
 </div>
 <div class="step">
@@ -53,13 +55,40 @@ no_pad_top: false
         <div class="circle">5</div>
     </div>
     <div>
-        <div class="step-title">Login steps</div>
-        <div class="step-caption">Steps to login to the chief node of the CS system cluster. Logging into the chief node is done by using <code class="docutils literal notranslate"><span class="pre">ssh</span></code>. </div>
+        <div class="step-title">Aptos will inform you whether your node is selected</div>
+        <div class="step-caption">You will receive an email notification. If your node is selected, follow the  instructions (ADD LINK). </div>
     </div>
 </div>
 <div class="step">
     <div>
-    <div class="circle">6</div>
+        <div class="circle">6</div>
+    </div>
+    <div>
+        <div class="step-title">If your node is selected, you will have 24 hours to join the AIT-2 validator set</div>
+        <div class="step-caption">Steps to join the AIT-2 network are detailed HERE.</div>
+    </div>
+</div>
+<div class="step">
+    <div>
+        <div class="circle">7</div>
+    </div>
+    <div>
+        <div class="step-title">Stake your coins and meet a few minimum requirements for the continuous node performance and staking</div>
+        <div class="step-caption">Minimum requirements for the node performance and the steps for staking are detailed HERE. </div>
+    </div>
+</div>
+<div class="step">
+    <div>
+        <div class="circle">8</div>
+    </div>
+    <div>
+        <div class="step-title">At the conclusion of AIT-2, follow the procedure to leave the validator set and shutdown your node</div>
+        <div class="step-caption">Steps to properly leave the validator set and shutdown your node are detailed HERE. </div>
+    </div>
+</div>
+<div class="step">
+    <div>
+    <div class="step-active circle">9</div>
     </div>
     <div>
     <div class="step-title">Done</div>
@@ -68,7 +97,8 @@ no_pad_top: false
     </div>
 
 <div>
-<p class="card-section-h2">Setting up a node for AIT-2</p>
+
+## Setting up a node for AIT-2 
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
   <div class="col">
