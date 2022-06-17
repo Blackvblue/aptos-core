@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Deserialize, Serialize, Hash)]
 pub struct LogicalTime {
     epoch: u64,
     round: Round,
@@ -33,7 +33,9 @@ impl LogicalTime {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, CryptoHasher, BCSCryptoHash, PartialEq, Eq)]
+#[derive(
+    Clone, Debug, Deserialize, Serialize, CryptoHasher, BCSCryptoHash, PartialEq, Eq, Hash,
+)]
 pub struct SignedDigestInfo {
     pub digest: HashValue,
     pub expiration: LogicalTime,
