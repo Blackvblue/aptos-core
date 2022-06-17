@@ -103,7 +103,7 @@ impl QuorumStore {
             proof_builder_tx.clone(),
             config.max_batch_size,
         );
-        let proof_builder = ProofBuilder::new(config.proof_timeout_ms);
+        let proof_builder = ProofBuilder::new(epoch, config.proof_timeout_ms);
         let (batch_store, batch_reader) = BatchStore::new(
             epoch,
             last_committed_round,

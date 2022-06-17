@@ -19,6 +19,7 @@ pub(crate) enum ProofBuilderCommand {
 #[allow(dead_code)]
 pub(crate) struct ProofBuilder {
     // peer_id: PeerId,
+    epoch: u64,
     proof_timeout_ms: usize,
     digest_to_proof: HashMap<HashValue, (ProofOfStore, ProofReturnChannel)>,
     timeouts: DigestTimeouts,
@@ -27,9 +28,10 @@ pub(crate) struct ProofBuilder {
 //PoQS builder object - gather signed digest to form PoQS
 #[allow(dead_code)]
 impl ProofBuilder {
-    pub fn new(proof_timeout_ms: usize) -> Self {
+    pub fn new(epoch: u64, proof_timeout_ms: usize) -> Self {
         Self {
             // peer_id: my_peer_id,
+            epoch,
             proof_timeout_ms,
             digest_to_proof: HashMap::new(),
             timeouts: DigestTimeouts::new(),
@@ -46,7 +48,7 @@ impl ProofBuilder {
 
         self.timeouts.add_digest(info.digest, self.proof_timeout_ms);
         self.digest_to_proof
-            .insert(info.digest, (ProofOfStore::new(info), tx));
+            .insert(info.digest, (ProofOfStore::new(self.epoch, info), tx));
 
         if let Err(_) = self.add_signature(signed_digest, &validator_verifier) {
             //TODO: do something
