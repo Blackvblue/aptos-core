@@ -1,10 +1,11 @@
 ---
-title: "Using AWS"
+title: "On AWS"
 slug: "run-validator-node-using-aws"
-sidebar_position: 11
 ---
 
-This is a step-by-step guide to install an Aptos node on AWS.
+# On AWS
+
+This is a step-by-step guide to install an Aptos node on AWS. These steps will configure a Validator node and a FullNode on separate machines. 
 
 ## Before you proceed
 
@@ -64,14 +65,14 @@ Make sure you complete these pre-requisite steps before you proceed:
     }
 
     module "aptos-node" {
-      # download Terraform module from aptos-labs/aptos-core repo
+      # Download Terraform module from aptos-labs/aptos-core repo
       source        = "github.com/aptos-labs/aptos-core.git//terraform/aptos-node/aws?ref=main"
       region        = <aws region>  # Specify the region
       # zone_id     = "<Route53 zone id>"  # zone id for Route53 if you want to use DNS
       era           = 1              # bump era number to wipe the chain
       chain_id      = 23
-      image_tag     = "testnet" # Specify the docker image tag to use
-      validator_name = "<Name of Your Validator>"
+      image_tag     = "testnet" # Specify the image tag to use
+      validator_name = "<Name of your Validator>"
     }
     ```
 
@@ -104,11 +105,11 @@ This will download all the Terraform dependencies into the `.terraform` folder i
 
 8. After `terraform apply` finishes, you can check if those resources are created:
 
-    - `aws eks update-kubeconfig --name aptos-$WORKSPACE` to configure access for your k8s cluster.
-    - `kubectl get pods` this should have haproxy, validator and fullnode. with validator and fullnode pod `pending` (require further action in later steps)
-    - `kubectl get svc` this should have `validator-lb` and `fullnode-lb`, with an external-IP you can share later for connectivity.
+    - `aws eks update-kubeconfig --name aptos-$WORKSPACE`: To configure access for your k8s cluster.
+    - `kubectl get pods`: This should have haproxy, validator and fullnode, with validator and fullnode pod `pending` (require further action in later steps).
+    - `kubectl get svc`: This should have `validator-lb` and `fullnode-lb`, with an external IP you can share later for connectivity.
 
-9. Get your node IP info:
+9. Get your node IP information into your environment:
 
     ```
     export VALIDATOR_ADDRESS="$(kubectl get svc ${WORKSPACE}-aptos-node-validator-lb --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
@@ -116,22 +117,30 @@ This will download all the Terraform dependencies into the `.terraform` folder i
     export FULLNODE_ADDRESS="$(kubectl get svc ${WORKSPACE}-aptos-node-fullnode-lb --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
     ```
 
-10. Generate key pairs (node owner key, consensus key and networking key) in your working directory.
+10. Generate the key pairs (node owner key, consensus key and networking key) in your working directory.
 
     ```
     aptos genesis generate-keys --output-dir ~/$WORKSPACE
     ```
 
-    This will create three files: `private-keys.yaml`, `validator-identity.yaml`, `validator-full-node-identity.yaml` for you. **IMPORTANT**: Backup your key files somewhere safe. These key files are important for you to establish ownership of your node, and you will use this information to claim your rewards later if eligible. Never share those keys with anyone else.
+    This will create three key files: 
+      - `private-keys.yaml`
+      - `validator-identity.yaml`, and
+      - `validator-full-node-identity.yaml`.
+      
+      :::caution IMPORTANT
 
-11. Configure validator information. This is all the info you need to register on our community website later.
+       Backup your key files somewhere safe. These key files are important for you to establish ownership of your node, and you will use this information to claim your rewards later if eligible. **Never share these keys with anyone.**
+      :::
+
+11. Configure the Validator information. This is all the information you need to register on Aptos community website later.
 
     ```
     aptos genesis set-validator-configuration --keys-dir ~/$WORKSPACE --local-repository-dir ~/$WORKSPACE --username <select a username for your node> --validator-host $VALIDATOR_ADDRESS:6180 --full-node-host $FULLNODE_ADDRESS:6182
 
     ```
 
-    This will create a YAML file in your working directory with your username, e.g. `aptosbot.yaml`, it should looks like below:
+    This will create a YAML file in your working directory with your username. For example, for a username `aptosbot` the file will be `aptosbot.yaml`, and the file contents will look like below:
 
     ```
     ---
@@ -148,52 +157,52 @@ This will download all the Terraform dependencies into the `.terraform` folder i
     stake_amount: 1
     ```
 
-12. Create layout YAML file, which defines the node in the validatorSet. For test mode, we can create a genesis blob containing only one node.
+12. Create a layout YAML file, which defines the node in the Aptos `validatorSet`. 
+For the test mode, it is sufficient to create a genesis blob containing only one node.
 
-    ```
-    vi layout.yaml
-    ```
+  ```
+  vi layout.yaml
+  ```
 
-    Add root key, node username, and chain_id in the `layout.yaml` file, for example:
+  Add the `root_key`, the Validator node username, and `chain_id` in the `layout.yaml` file. For example:
 
-    ```
-    ---
-    root_key: "0x5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7ea206eaf6f8043956"
-    users:
-      - <username you specified in step 11>
-    chain_id: 23
-    ```
+  ```
+  ---
+  root_key: "0x5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7ea206eaf6f8043956"
+  users:
+    - <username you specified for the node in step 11>
+  chain_id: 23
+  ```
 
-13. Download AptosFramework Move bytecode into a folder named `framework`.
+13. Download the AptosFramework Move bytecode into a folder named `framework`.
 
-    Download the Aptos Framework from the release page: https://github.com/aptos-labs/aptos-core/releases/tag/aptos-framework-v0.1.0
+    Download the Aptos Framework zip file from the Aptos release page: https://github.com/aptos-labs/aptos-core/releases/tag/aptos-framework-v0.1.0 and unzip it.
 
     ```
     wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-framework-v0.1.0/framework.zip
-
     unzip framework.zip
     ```
 
-    You will now have a folder called `framework`, which contains Move bytecode with the format `.mv`.
+    You will now have a folder called `framework`, which contains the Move bytecode with the format `.mv`.
 
-14. Compile genesis blob and waypoint.
+14. Compile the genesis blob and waypoint.
 
     ```
     aptos genesis generate-genesis --local-repository-dir ~/$WORKSPACE --output-dir ~/$WORKSPACE
     ``` 
 
-    This will create two files in your working directory, `genesis.blob` and `waypoint.txt`.
+    This will create two files in your working directory: `genesis.blob` and `waypoint.txt`.
 
-15. To recap, in your working directory, you should have a list of files:
-    - `main.tf` the Terraform files to install aptos-node module.
-    - `private-keys.yaml` Private keys for owner account, consensus, networking
-    - `validator-identity.yaml` Private keys for setting validator identity
-    - `validator-full-node-identity.yaml` Private keys for setting validator full node identity
-    - `<username>.yaml` Node info for both validator / fullnode
-    - `layout.yaml` layout file to define root key, validator user, and chain ID
-    - `framework` folder which contains all the move bytecode for AptosFramework.
-    - `waypoint.txt` waypoint for genesis transaction
-    - `genesis.blob` genesis binary contains all the info about framework, validatorSet and more.
+15. To summarize, in your working directory you should have a list of files:
+    - `main.tf`: The Terraform files to install the `aptos-node` module (from steps 3 and 4).
+    - `private-keys.yaml`: Private keys for the owner account, consensus, networking (from step 10).
+    - `validator-identity.yaml`: Private keys for setting the Validator identity (from step 10).
+    - `validator-full-node-identity.yaml`: Private keys for setting validator full node identity (from step 10).
+    - `<username>.yaml`: Node information that will be used for both the Validator and the FullNode (from step 11). 
+    - `layout.yaml`: The layout file containing the key values for root key, validator user, and chain ID (from step 12).
+    - `framework`: The folder that contains all the Move bytecode you downloaded and unzipped (from step 13).
+    - `waypoint.txt`: The waypoint for the genesis transaction (from step 14).
+    - `genesis.blob` The genesis binary that contains all the information about the framework, validatorSet and more (from step 14).
 
 16. Insert `genesis.blob`, `waypoint.txt` and the identity files as secret into k8s cluster.
 
@@ -212,7 +221,7 @@ This will download all the Terraform dependencies into the `.terraform` folder i
     :::
 
 
-17. Check all pods running.
+17. Check that all the pods are running.
 
     ```
     kubectl get pods

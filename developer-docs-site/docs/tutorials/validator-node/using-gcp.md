@@ -1,5 +1,5 @@
 ---
-title: "Run Validator Node Using GCP"
+title: "On GCP"
 slug: "run-validator-node-using-gcp"
 sidebar_position: 10
 ---

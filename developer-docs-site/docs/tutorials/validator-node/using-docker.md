@@ -1,5 +1,5 @@
 ---
-title: "Run Validator Node Using Docker"
+title: "Using Docker"
 slug: "run-validator-node-using-docker"
 sidebar_position: 12
 ---

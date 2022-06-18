@@ -1,10 +1,13 @@
 ---
-title: "Run a FullNode on GCP"
+title: "Single Doc for GCP"
 slug: "run-a-fullnode-on-gcp"
 sidebar_position: 11
 ---
 
-# Run a FullNode on GCP
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Single Doc for GCP
 
 This tutorial explains how to configure and deploy a public FullNode to connect to the Aptos devnet using Google Cloud (GCP). Running a FullNode in the cloud usually provides better stability and availability compared to running it on your laptop. If you're looking for deploying a production grade FullNode, we recommend you to deploy it on the cloud.
 
@@ -15,16 +18,19 @@ This tutorial explains how to configure and deploy a public FullNode to connect 
 You can run the commands in this guide to deploy your full node on Google Kubernetes Engine from any machine you want. From a [VM on GCP](https://cloud.google.com/compute), [Google Cloud Shell](https://cloud.google.com/shell), or your personal computer.
 
 The following packages come pre-installed with Cloud Shell. Make sure to review the [documentation around ephermability](https://cloud.google.com/shell/docs/using-cloud-shell#choosing_ephemeral_mode) if you choose to use Cloud Shell. But if you are running the installation from your laptop or another machine, you need to install:
-* Terraform 1.1.7: https://www.terraform.io/downloads.html
-* Kubernetes cli: https://kubernetes.io/docs/tasks/tools/
-* Google Cloud cli: https://cloud.google.com/sdk/docs/install-sdk
+   * Aptos CLI: https://github.com/aptos-labs/aptos-core/blob/main/crates/aptos/README.md
+   * Terraform 1.1.7: https://www.terraform.io/downloads.html
+   * Kubernetes CLI: https://kubernetes.io/docs/tasks/tools/
+   * Google Cloud CLI: https://cloud.google.com/sdk/docs/install-sdk
 
-Once you have installed the gcloud CLI, log into GCP using gcloud (https://cloud.google.com/sdk/gcloud/reference/auth/login)
+After you installed the gcloud CLI, run the below command to log into GCP using gcloud (see help doc here: https://cloud.google.com/sdk/gcloud/reference/auth/login):
 ```
 $ gcloud auth login --update-adc
 ```
 
-If you already have a GCP account setup, jump right into [Getting Started](#getting-started), if you don't, follow the sections below to create and configure your GCP account.
+:::note
+If you already have a GCP account setup, skip the below [GCP Setup](#gcp-setup) and go to [Getting Started](#getting-started).
+:::
 
 ### GCP Setup
 
@@ -53,17 +59,39 @@ You can deploy a public FullNode on GCP by using the Aptos fullnode Terraform mo
 
 1. Create a working directory for your configuration.
 
-    * Choose a workspace name e.g. `devnet`. Note: this defines terraform workspace name, which in turn is used to form resource names.
+  <Tabs>
+    <TabItem value="devnet" label="Devnet" default>
+
+    Choose a workspace name e.g. `devnet`. **Note**: this defines Terraform workspace name, which in turn is used to form resource names.
+
     ```
     $ export WORKSPACE=devnet
     ```
 
-    * Create a directory for the workspace
+    Create a directory for the workspace
+
     ```
     $ mkdir -p ~/$WORKSPACE
     ```
 
-2. Create a storage bucket for storing the Terraform state on Google Cloud Storage.  Use the console or this gcs command to create the bucket.  The name of the bucket must be unique.  See the Google Cloud Storage documentation here: https://cloud.google.com/storage/docs/creating-buckets#prereq-cli
+    </TabItem>
+    <TabItem value="testnet" label="Incentivized Testnet">
+
+    Choose a workspace name e.g. `testnet`. **Note**: this defines Terraform workspace name, which in turn is used to form resource names.
+
+    ```
+    $ export WORKSPACE=testnet
+    ```
+
+    Create a directory for the workspace
+
+    ```
+    $ mkdir -p ~/$WORKSPACE
+    ```
+    </TabItem>
+  </Tabs>
+
+2. Create a storage bucket for storing the Terraform state on Google Cloud Storage.  Use the GCP UI or Google Cloud Storage command to create the bucket.  The name of the bucket must be unique.  See the Google Cloud Storage documentation here: https://cloud.google.com/storage/docs/creating-buckets#prereq-cli.
   ```
   $ gsutil mb gs://BUCKET_NAME
   # for example
@@ -76,34 +104,68 @@ You can deploy a public FullNode on GCP by using the Aptos fullnode Terraform mo
   $ touch main.tf
   ```
 
-4. Modify `main.tf` file to configure Terraform, and create fullnode from Terraform module. Example content for `main.tf`:
-  ```
-  terraform {
-    required_version = "~> 1.1.0"
-    backend "gcs" {
-      bucket = "BUCKET_NAME" # bucket name created in step 2
-      prefix = "state/fullnode"
+4. Modify `main.tf` file to configure Terraform:
+
+  <Tabs>
+    <TabItem value="devnet" label="Devnet" default>
+
+   Create fullnode from Terraform module. Example content for `main.tf`:
+
+    ```
+    terraform {
+      required_version = "~> 1.1.0"
+      backend "gcs" {
+        bucket = "BUCKET_NAME" # bucket name created in step 2
+        prefix = "state/fullnode"
+      }
     }
-  }
+    module "fullnode" {
+      # download Terraform module from aptos-labs/aptos-core repo
+      source        = "github.com/aptos-labs/aptos-core.git//terraform/fullnode/gcp?ref=main"
+      region        = "us-central1"  # Specify the region
+      zone          = "c"            # Specify the zone suffix
+      project       = "gcp-fullnode" # Specify your GCP project name
+      era           = 1              # bump era number to wipe the chain
+      image_tag     = "dev_5b525691" # Specify the docker image tag to use
+    }
+    ```
+    </TabItem>
+    <TabItem value="testnet" label="Incentivized Testnet">
 
-  module "fullnode" {
-    # download Terraform module from aptos-labs/aptos-core repo
-    source        = "github.com/aptos-labs/aptos-core.git//terraform/fullnode/gcp?ref=main"
-    region        = "us-central1"  # Specify the region
-    zone          = "c"            # Specify the zone suffix
-    project       = "gcp-fullnode" # Specify your GCP project name
-    era           = 1              # bump era number to wipe the chain
-    image_tag     = "dev_5b525691" # Specify the docker image tag to use
-  }
-  ```
+    Create aptos-node from Terraform module. Example content for `main.tf`:
 
-5. Initialise Terraform in the same directory of your `main.tf` file
+    ```
+    terraform {
+      required_version = "~> 1.1.0"
+      backend "gcs" {
+        bucket = "BUCKET_NAME" # bucket name created in step 2
+        prefix = "state/aptos-node"
+      }
+    }
+    module "aptos-node" {
+      # download Terraform module from aptos-labs/aptos-core repo
+      source        = "github.com/aptos-labs/aptos-core.git//terraform/aptos-node/gcp?ref=testnet"
+      region        = "us-central1"  # Specify the region
+      zone          = "c"            # Specify the zone suffix
+      project       = "<GCP Project ID>" # Specify your GCP project ID
+      era           = 1              # bump era number to wipe the chain
+      chain_id      = 23
+      image_tag     = "testnet" # Specify the docker image tag to use
+      validator_name = "<Name of Your Validator, no space, e.g. aptosbot>"
+    }
+    ```
+    </TabItem>
+  </Tabs>
+
+5. Initialize Terraform in the same directory of your `main.tf` file
   ```
   $ terraform init
   ```
-This should download all the terraform dependencies for you, in the `.terraform` folder.
+  
+  This will download all the Terraform dependencies for you, in the .terraform folder in your current working directory.
 
 6. Create a new Terraform workspace to isolate your environments:
+
   ```
   $ terraform workspace new $WORKSPACE
   # This command will list all workspaces
@@ -111,16 +173,57 @@ This should download all the terraform dependencies for you, in the `.terraform`
   ```
 
 7. Apply the configuration.
+
   ```
   $ terraform apply
   ```
-  This might take a while to finish (10 - 20 minutes), Terraform will create all the resources on your cloud account.
+  This might take a while to finish (10 - 20 minutes). Terraform will create all the resources in your cloud account.
 
-## Validation
+8. Once Terraform apply finished, you can check if the resources are created:
 
-Once Terraform apply finished, you can follow this section to validate your deployment.
+  <Tabs>
+    <TabItem value="devnet" label="Devnet" default>
 
-1. Configure your Kubernetes client to access the cluster you just deployed:
+    ```
+    gcloud container clusters get-credentials aptos-$WORKSPACE --zone <region/zone> --project <project>
+    ```
+    to configure the access for k8s cluster. For example:
+    ```
+    gcloud container clusters get-credentials aptos-devnet --zone us-central1-a --project aptos-fullnode
+    ```
+    and
+
+    ```
+    kubectl get pods -n aptos
+    ``` 
+    And finally,
+
+    ```
+    kubectl get svc -o custom-columns=IP:status.loadBalancer.ingress -n aptos
+    ```
+
+    </TabItem>
+    <TabItem value="testnet" label="Incentivized Testnet" default>
+
+    ```
+    gcloud container clusters get-credentials aptos-$WORKSPACE --zone <region/zone> --project <project>
+    ```
+    to configure the access for k8s cluster. And,
+
+    ```
+    kubectl get pods
+    ``` 
+    this should have haproxy, validator and fullnode, with validator and fullnode pod pending (require further action in later steps). And finally,
+
+    ```
+    kubectl get svc 
+    ```
+    this should have validator-lb and fullnode-lb, with an external-IP you can share later for connectivity.
+
+    </TabItem>
+  </Tabs>
+
+9. Configure your Kubernetes client to access the cluster you just deployed:
   ```
   $ gcloud container clusters get-credentials aptos-$WORKSPACE --zone <region_zone_name> --project <project_name>
   # for example:

@@ -1,5 +1,5 @@
 ---
-title: "Run Validator Node Using Azure"
+title: "On Azure"
 slug: "run-validator-node-using-azure"
 sidebar_position: 11
 ---
