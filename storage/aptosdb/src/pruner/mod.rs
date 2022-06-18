@@ -52,7 +52,7 @@ pub(crate) struct Pruner {
     /// sets value to `V`, all versions before `V` can no longer be accessed. This is protected by Mutex
     /// as this is accessed both by the Pruner thread and the worker thread.
     #[allow(dead_code)]
-    min_readable_version: Arc<Mutex<Vec<Version>>>,
+    min_readable_version: Arc<Mutex<Vec<Option<Version>>>>,
     /// We send a batch of version to the underlying pruners for performance reason. This tracks the
     /// last version we sent to the pruners. If both of the pruners are disabled
     /// (i.e. state_store_prune_window and ledger_prune_window are None,) this value will be None.
@@ -80,7 +80,19 @@ impl Pruner {
     ) -> Self {
         let (command_sender, command_receiver) = channel();
 
-        let min_readable_version = Arc::new(Mutex::new(vec![0, 0, 0, 0, 0]));
+        let min_readable_version = Arc::new(Mutex::new(vec![
+            if storage_pruner_config.state_store_prune_window.is_none() {
+                None
+            } else {
+                Some(0)
+            },
+            if storage_pruner_config.ledger_prune_window.is_none() {
+                None
+            } else {
+                Some(0)
+            },
+        ]));
+
         let worker_progress_clone = Arc::clone(&min_readable_version);
 
         PRUNER_WINDOW
@@ -98,7 +110,7 @@ impl Pruner {
             state_merkle_rocksdb,
             command_receiver,
             min_readable_version,
-            storage_pruner_config.pruning_batch_size as u64,
+            storage_pruner_config,
         );
         let worker_thread = std::thread::Builder::new()
             .name("aptosdb_pruner".into())
@@ -133,18 +145,19 @@ impl Pruner {
         self.ledger_prune_window
     }
 
-    pub fn get_min_readable_version_by_pruner_index(&self, pruner_index: PrunerIndex) -> Version {
+    pub fn get_min_readable_version_by_pruner_index(
+        &self,
+        pruner_index: PrunerIndex,
+    ) -> Option<Version> {
         self.min_readable_version.lock()[pruner_index as usize]
     }
 
-    pub fn get_min_readable_ledger_version(&self) -> Version {
+    pub fn get_min_readable_ledger_version(&self) -> Option<Version> {
         self.get_min_readable_version_by_pruner_index(LedgerPrunerIndex)
     }
     /// Sends pruning command to the worker thread when necessary.
     pub fn maybe_wake_pruner(&self, latest_version: Version) {
-        if self.last_version_sent_to_pruners.is_none() {
-            return;
-        }
+        assert!(self.last_version_sent_to_pruners.is_some());
         *self.latest_version.lock() = latest_version;
         if latest_version
             >= *self.last_version_sent_to_pruners.as_ref().unwrap().lock()
@@ -206,7 +219,12 @@ impl Pruner {
             let end = Instant::now() + TIMEOUT;
 
             while Instant::now() < end {
-                if *self.min_readable_version.lock().get(pruner_index).unwrap()
+                if self
+                    .min_readable_version
+                    .lock()
+                    .get(pruner_index)
+                    .unwrap()
+                    .unwrap()
                     >= min_readable_state_store_version
                 {
                     return Ok(());
@@ -218,49 +236,21 @@ impl Pruner {
         Ok(())
     }
 
-    /// (For tests only.) Notifies the worker thread and waits for it to finish its job by polling
-    /// an internal counter.
+    /// (For tests only.) Ensure a pruner is disabled.
     #[cfg(test)]
-    pub fn wait_and_ensure_disabled(
-        &self,
-        latest_version: Version,
-        pruner_index: usize,
-    ) -> anyhow::Result<()> {
-        use std::{
-            thread::sleep,
-            time::{Duration, Instant},
-        };
-        self.maybe_wake_pruner(latest_version);
-
-        if (self.state_store_prune_window.is_some()
-            && latest_version > self.state_store_prune_window.unwrap())
-            || (self.ledger_prune_window.is_some()
-                && latest_version > self.ledger_prune_window.unwrap())
-        {
-            let min_readable_state_store_version =
-                latest_version - self.state_store_prune_window.unwrap_or(0);
-
-            // Assuming no big pruning chunks will be issued by a test.
-            const TIMEOUT: Duration = Duration::from_secs(10);
-            let end = Instant::now() + TIMEOUT;
-
-            while Instant::now() < end {
-                if *self.min_readable_version.lock().get(pruner_index).unwrap()
-                    > min_readable_state_store_version
-                {
-                    anyhow::bail!(
-                        "min_readable_version should not change if the pruner is disabled"
-                    );
-                }
-                sleep(Duration::from_millis(1));
-            }
-        }
+    pub fn ensure_disabled(&self, pruner_index: usize) -> anyhow::Result<()> {
+        assert!(self
+            .min_readable_version
+            .lock()
+            .get(pruner_index)
+            .unwrap()
+            .is_none());
         Ok(())
     }
 
     /// (For tests only.) Updates the minimal readable version kept by pruner.
     #[cfg(test)]
-    pub fn testonly_update_min_version(&mut self, version: &[Version]) {
+    pub fn testonly_update_min_version(&mut self, version: &[Option<Version>]) {
         self.min_readable_version = Arc::new(Mutex::new(version.to_vec()));
     }
 }

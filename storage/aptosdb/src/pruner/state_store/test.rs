@@ -171,10 +171,7 @@ fn test_state_store_pruner_disabled() {
     // Prune till version=0. This should basically be a no-op
     {
         pruner
-            .wait_and_ensure_disabled(
-                0, /* latest_version */
-                PrunerIndex::StateStorePrunerIndex as usize,
-            )
+            .ensure_disabled(PrunerIndex::StateStorePrunerIndex as usize)
             .unwrap();
         for i in 0..num_versions {
             verify_state_in_store(
@@ -190,10 +187,7 @@ fn test_state_store_pruner_disabled() {
     // we expect versions 0 to 9 to be pruned.
     {
         pruner
-            .wait_and_ensure_disabled(
-                prune_batch_size as u64, /* latest_version */
-                PrunerIndex::StateStorePrunerIndex as usize,
-            )
+            .ensure_disabled(PrunerIndex::StateStorePrunerIndex as usize)
             .unwrap();
         for i in 0..prune_batch_size {
             assert!(state_store
@@ -249,8 +243,12 @@ fn test_worker_quit_eagerly() {
             Arc::clone(&db),
             Arc::clone(&aptos_db.state_merkle_db),
             command_receiver,
-            Arc::new(Mutex::new(vec![0, 0])), /* progress */
-            100,
+            Arc::new(Mutex::new(vec![Some(0), Some(0)])), /* progress */
+            StoragePrunerConfig {
+                state_store_prune_window: Some(1),
+                ledger_prune_window: Some(1),
+                pruning_batch_size: 100,
+            },
         );
         command_sender
             .send(Command::Prune {

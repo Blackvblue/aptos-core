@@ -121,12 +121,9 @@ fn verify_event_store_pruner_disabled(events: Vec<Vec<ContractEvent>>) {
     aptos_db.ledger_db.write_schemas(cs.batch).unwrap();
 
     // Verify no pruning has happened.
-    for i in (0..=num_versions).step_by(2) {
+    for _i in (0..=num_versions).step_by(2) {
         pruner
-            .wait_and_ensure_disabled(
-                i as u64, /* latest_version */
-                PrunerIndex::LedgerPrunerIndex as usize,
-            )
+            .ensure_disabled(PrunerIndex::LedgerPrunerIndex as usize)
             .unwrap();
         // ensure that all events up to i * 2 are valid in DB
         for version in 0..num_versions {
