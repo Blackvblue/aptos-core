@@ -125,7 +125,7 @@ fn verify_txn_store_pruner(
             .unwrap();
         // ensure that all transaction up to i * 2 has been pruned
         assert_eq!(
-            *pruner.last_version_sent_to_pruners.as_ref().unwrap().lock(),
+            *pruner.last_version_sent_to_pruners.as_ref().lock(),
             i as u64
         );
         for j in 0..i {

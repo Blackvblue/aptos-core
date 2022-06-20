@@ -120,14 +120,14 @@ impl Worker {
                     {
                         if let Some(pruner) = pruner_option {
                             assert!(new_target_version_option.is_some());
-                            if let Some(new_target_version) = new_target_version_option {
-                                if *new_target_version > pruner.lock().target_version() {
-                                    // Switch to non-blocking to allow some work to be done after the
-                                    // channel has drained.
-                                    self.blocking_recv = false;
-                                }
-                                pruner.lock().set_target_version(*new_target_version);
+                            if new_target_version_option.unwrap() > pruner.lock().target_version() {
+                                // Switch to non-blocking to allow some work to be done after the
+                                // channel has drained.
+                                self.blocking_recv = false;
                             }
+                            pruner
+                                .lock()
+                                .set_target_version(new_target_version_option.unwrap());
                         }
                     }
                 }

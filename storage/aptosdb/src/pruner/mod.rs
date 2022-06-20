@@ -52,13 +52,10 @@ pub(crate) struct Pruner {
     /// sets value to `V`, all versions before `V` can no longer be accessed. This is protected by Mutex
     /// as this is accessed both by the Pruner thread and the worker thread.
     #[allow(dead_code)]
-    min_readable_version: Arc<Mutex<Vec<Option<Version>>>>,
+    min_readable_versions: Arc<Mutex<Vec<Option<Version>>>>,
     /// We send a batch of version to the underlying pruners for performance reason. This tracks the
-    /// last version we sent to the pruners. If both of the pruners are disabled
-    /// (i.e. state_store_prune_window and ledger_prune_window are None,) this value will be None.
-    /// Otherwise, this value represents the last version we sent to either the state_store_pruner
-    /// or the ledger_pruner or both.
-    last_version_sent_to_pruners: Option<Arc<Mutex<Version>>>,
+    /// last version we sent to the pruners.
+    last_version_sent_to_pruners: Arc<Mutex<Version>>,
     /// Ideal batch size of the versions to be sent to the pruner
     pruning_batch_size: usize,
     /// latest version
@@ -122,16 +119,8 @@ impl Pruner {
             ledger_prune_window: storage_pruner_config.ledger_prune_window,
             worker_thread: Some(worker_thread),
             command_sender: Mutex::new(command_sender),
-            min_readable_version: worker_progress_clone,
-            last_version_sent_to_pruners: if storage_pruner_config
-                .state_store_prune_window
-                .is_some()
-                || storage_pruner_config.ledger_prune_window.is_some()
-            {
-                Some(Arc::new(Mutex::new(0)))
-            } else {
-                None
-            },
+            min_readable_versions: worker_progress_clone,
+            last_version_sent_to_pruners: Arc::new(Mutex::new(0)),
             pruning_batch_size: storage_pruner_config.pruning_batch_size,
             latest_version: Arc::new(Mutex::new(0)),
         }
@@ -149,7 +138,7 @@ impl Pruner {
         &self,
         pruner_index: PrunerIndex,
     ) -> Option<Version> {
-        self.min_readable_version.lock()[pruner_index as usize]
+        self.min_readable_versions.lock()[pruner_index as usize]
     }
 
     pub fn get_min_readable_ledger_version(&self) -> Option<Version> {
@@ -157,14 +146,12 @@ impl Pruner {
     }
     /// Sends pruning command to the worker thread when necessary.
     pub fn maybe_wake_pruner(&self, latest_version: Version) {
-        assert!(self.last_version_sent_to_pruners.is_some());
         *self.latest_version.lock() = latest_version;
         if latest_version
-            >= *self.last_version_sent_to_pruners.as_ref().unwrap().lock()
-                + self.pruning_batch_size as u64
+            >= *self.last_version_sent_to_pruners.as_ref().lock() + self.pruning_batch_size as u64
         {
             self.wake_pruner(latest_version);
-            *self.last_version_sent_to_pruners.as_ref().unwrap().lock() = latest_version;
+            *self.last_version_sent_to_pruners.as_ref().lock() = latest_version;
         }
     }
 
@@ -220,7 +207,7 @@ impl Pruner {
 
             while Instant::now() < end {
                 if self
-                    .min_readable_version
+                    .min_readable_versions
                     .lock()
                     .get(pruner_index)
                     .unwrap()
@@ -240,7 +227,7 @@ impl Pruner {
     #[cfg(test)]
     pub fn ensure_disabled(&self, pruner_index: usize) -> anyhow::Result<()> {
         assert!(self
-            .min_readable_version
+            .min_readable_versions
             .lock()
             .get(pruner_index)
             .unwrap()
@@ -251,7 +238,7 @@ impl Pruner {
     /// (For tests only.) Updates the minimal readable version kept by pruner.
     #[cfg(test)]
     pub fn testonly_update_min_version(&mut self, version: &[Option<Version>]) {
-        self.min_readable_version = Arc::new(Mutex::new(version.to_vec()));
+        self.min_readable_versions = Arc::new(Mutex::new(version.to_vec()));
     }
 }
 
