@@ -76,6 +76,7 @@ const sidebars = {
           collapsed: true,
           items: [
             "tutorials/validator-node/intro",
+            "tutorials/validator-node/ait-landing",
             "reference/node-liveness-criteria",
             "tutorials/validator-node/connect-to-testnet",
           ],

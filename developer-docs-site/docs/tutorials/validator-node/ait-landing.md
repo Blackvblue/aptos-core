@@ -1,13 +1,9 @@
 ---
 title: "AIT-2"
-slug: "index"
-disable_pagination: true
-hide_right_sidebar: true
-hide_table_of_contents: false
-hide_title: false
-thinner_content: true
-no_pad_top: false
+slug: "ait-landing"
 ---
+
+# AIT-2
 
 <p class="card-section-h2">Welcome to AIT-2</p>
 
@@ -97,10 +93,13 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
     </div>
 
 <div>
+<br />
+<br />
 
-## Setting up a node for AIT-2 
 
-<div class="timeline">
+## Setting up a node for AIT-2 (DRAFT)
+
+<div class="docs-card-container">
 <div class="row row-cols-1 row-cols-md-3 g-4">
   <div class="col">
     <div class="card h-100">
@@ -177,3 +176,4 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
 </div>
 <br />
 <br />
+
