@@ -1,10 +1,10 @@
 ---
-title: "Run a FullNode"
+title: "Install a FullNode"
 slug: "run-a-fullnode"
 sidebar_position: 10
 ---
 
-# Run a FullNode
+# Install a FullNode
 
 You can run your own [FullNode](/basics/basics-fullnodes) to synchronize with the state of the Aptos Blockchain and stay up-to-date. FullNodes replicate the entire state of the blockchain by querying other Aptos FullNodes or validators.
 

@@ -80,7 +80,7 @@ const sidebars = {
         },
         {
           type: "category",
-          label: "Node Installation",
+          label: "Install Node",
           collapsible: true,
           collapsed: true,
           items: [
@@ -91,7 +91,7 @@ const sidebars = {
             "tutorials/validator-node/using-source-code",
             {
               type: "category",
-              label: "Run a FullNode",
+              label: "FullNode for Devnet",
               collapsible: true,
               collapsed: true,
               items: [
