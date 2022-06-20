@@ -326,13 +326,13 @@ pub async fn clean_k8s_cluster(
 
 fn get_new_era() -> Result<String> {
     let v: Value = get_helm_values("aptos")?;
-    println!("{}", v["genesis"]["era"]);
-    let chain_era: &str = &era_to_string(&v["genesis"]["era"]).unwrap();
+    println!("{}", v["chain"]["era"]);
+    let chain_era: &str = &era_to_string(&v["chain"]["era"]).unwrap();
 
     // get the new era
     let mut rng = rand::thread_rng();
     let new_era: &str = &format!("fg{}", rng.gen::<u32>());
-    println!("genesis.era: {} --> {}", chain_era, new_era);
+    println!("chain.era: {} --> {}", chain_era, new_era);
     Ok(new_era.to_string())
 }
 

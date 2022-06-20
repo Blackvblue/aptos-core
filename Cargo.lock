@@ -3199,6 +3199,7 @@ dependencies = [
  "debug-interface",
  "either",
  "futures",
+ "hex",
  "hyper",
  "hyper-proxy",
  "hyper-tls",
