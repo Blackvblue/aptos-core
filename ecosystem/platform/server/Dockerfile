@@ -1,13 +1,11 @@
 # syntax=docker/dockerfile:1.4
 
+# NOTE: We're only using this base image for the preinstalled dependencies. We
+# are using Puma as the app server, not Passenger.
 FROM phusion/passenger-full:2.3.0
-
-ADD nginx.conf /etc/nginx/sites-enabled/webapp.conf
 
 RUN npm install -g yarn && \
   rm -f /etc/my_init.d/10_syslog-ng.init && \
-  rm -f /etc/service/nginx/down && \
-  rm -f /etc/nginx/sites-enabled/default && \
   mkdir /home/app/webapp && \
   chown app: /home/app/webapp
 
@@ -15,6 +13,7 @@ USER app
 ENV HOME /home/app
 ENV RAILS_ENV production
 ENV RAILS_LOG_TO_STDOUT true
+ENV RAILS_SERVE_STATIC_FILES true
 ENV NODE_ENV production
 WORKDIR /home/app/webapp
 
@@ -35,5 +34,4 @@ RUN yarn build && yarn build:css && \
 
 EXPOSE 3000
 
-USER root
-CMD ["/sbin/my_init"]
+CMD ["bundle", "exec", "rails", "server", "--binding", "0.0.0.0", "--port", "3000"]

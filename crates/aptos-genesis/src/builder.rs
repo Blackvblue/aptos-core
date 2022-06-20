@@ -29,6 +29,7 @@ use std::{
     io::{Read, Write},
     num::NonZeroUsize,
     path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 const VALIDATOR_IDENTITY: &str = "validator-identity.yaml";
@@ -498,6 +499,13 @@ impl Builder {
             configs.push(validator.try_into()?);
         }
 
+        // Default initial validator lockup expiration to now + 1 day.
+        let now_secs = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let initial_validator_lockup_expiration = now_secs + 86400;
+
         // Build genesis & waypoint
         let mut genesis_info = GenesisInfo::new(
             ChainId::test(),
@@ -505,6 +513,13 @@ impl Builder {
             configs,
             self.move_modules.clone(),
             self.min_price_per_gas_unit,
+            false,
+            0,
+            u64::MAX,
+            0,        // 1 day
+            31536000, // 1 year
+            86400,    // 1 day
+            initial_validator_lockup_expiration,
         )?;
         let waypoint = genesis_info.generate_waypoint()?;
         let genesis = genesis_info.get_genesis();
