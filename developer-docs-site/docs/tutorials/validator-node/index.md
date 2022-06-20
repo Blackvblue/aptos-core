@@ -13,7 +13,7 @@ no_pad_top: false
 
 To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the below steps. Use these steps as a checklist to keep track of your progress. A detailed documentation for each step is provided.
 
- <div class="timeline">
+ <div class="docs-card-container">
 <div class="step">
     <div>
         <div class="circle">1</div>
@@ -100,6 +100,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
 
 ## Setting up a node for AIT-2 
 
+<div class="timeline">
 <div class="row row-cols-1 row-cols-md-3 g-4">
   <div class="col">
     <div class="card h-100">
@@ -171,6 +172,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
       </div>
     </div>
   </div>
+</div>
 </div>
 </div>
 <br />

@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: "Development Environment"
 slug: "getting-started"
 ---
 

@@ -6,20 +6,113 @@ sidebar_position: 0
 hide_table_of_contents: true
 ---
 
-# Aptos Developer Network
+# Aptos Developer Documentation
 
-Welcome! Aptos is building a Layer 1 for everyone. Here in our documentation you can explore tutorials and technical concepts for the Aptos Network.
+Welcome! At Aptos Labs we are building a Layer 1 for everyone. This documentation will help you develop applications for the Aptos Blockchain, run nodes, and be a part of the blossoming Aptos community. This documentation covers both basic and advanced topics. Here you will find concepts, how-to guides, quickstarts, tutorials, code examples, release notes, and more.
 
-## Want to dive in?
+:::tip Aptos Incentivized Testnet-2 (AIT-2)
+Click here for the Aptos Incentivized Testnet-2 program. 
+:::
 
-- Start with the basics, such as [Transactions and States](basics/basics-txns-states) and how [Accounts](/basics/basics-accounts) work. 
+## Start here
 
-- Want something a bit more interactive? You can dive right into our [tutorials](/guides/getting-started).
+<div class="docs-card-container">
+<div class="row row-cols-4 row-cols-md-2a g-4">
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column">
+    <a href="#" class="card-title card-link stretched-link"> <h2>New to Aptos?</h2></a>
+    <p class="card-text">Start with this big picture, Aptos mental model document.</p>
+</div>
+</div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column" >
+    <a href="#" class="card-title card-link stretched-link"> <h2>Development setup</h2></a>
+    <p class="card-text">Begin by setting up your Aptos development environment.</p>
+</div>
+  </div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column">
+    <a href="#" class="card-title card-link stretched-link"> <h2>Run quickstart tutorials</h2></a>
+    <p class="card-text">Submit your first transaction, build your first NFT, write your first Move module, and more.</p>
+</div>
+</div>
+</div>
+</div>
 
-Or you can go straight to the [aptos-core source](https://github.com/aptos-labs/aptos-core) and help us build the Layer 1 for everyone.
 
-:::info Devnet Resets
-We will reset the devnet every Thursday Morning (PST). See the latest updates in [Aptos Discord][discord].
+## Concepts and guides
+
+<div class="docs-card-container">
+<div class="row row-cols-4 row-cols-md-2a g-4">
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column">
+    <a href="#" class="card-title card-link stretched-link"> <h2>Concepts</h2></a>
+    <p class="card-text">Lean key concepts of the Aptos Blockchain, including transactions, accounts, gas and transaction fees, nodes, and more. </p>
+</div>
+</div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column" >
+    <a href="#" class="card-title card-link stretched-link"> <h2>How it works</h2></a>
+    <p class="card-text">How does interacting with the Aptos Blockchain work, how Move works on Aptos, how to create a signed transaction, and more.</p>
+</div>
+  </div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column">
+    <a href="#" class="card-title card-link stretched-link"> <h2>Move on Aptos</h2></a>
+    <p class="card-text">Learn the differences between the Aptos devnet, a local testnet and the Aptos Inceitivized Testnet.</p>
+</div>
+</div>
+</div>
+</div>
+
+## Nodes
+
+<div class="docs-card-container">
+<div class="row row-cols-4 row-cols-md-2a g-4">
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column" >
+    <a href="#" class="card-title card-link stretched-link"> <h2>Run a Validator or a FullNode</h2></a>
+    <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+</div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column"  >
+    <a href="#" class="card-title card-link stretched-link"> <h2>Run a local testnet</h2></a>
+    <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+  </div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column"  >
+    <a href="#" class="card-title card-link stretched-link"> <h2>Staking on Aptos</h2></a>
+    <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+</div>
+</div>
+</div>
+
+## SDKs and APIs
+
+<div class="docs-card-container">
+<div class="row row-cols-4 row-cols-md-3a g-4">
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column" >
+    <a href="#" class="card-title card-link stretched-link"> <h2>Typescript SDK</h2></a>
+    <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+</div>
+  <div class="col">
+    <div class="card card-body h-100 d-flex flex-column"  >
+    <a href="#" class="card-title card-link stretched-link"> <h2>REST API</h2></a>
+    <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+</div>
+</div>
+</div>
+
+## Aptos devnet
+
+:::info Aptos Devnet Resets
+The Aptos devnet is reset every Thursday Morning (PST). See the latest updates in [Aptos Discord][discord].
 :::info
 
 ## Got a question?
