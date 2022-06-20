@@ -54,13 +54,11 @@ impl Worker {
             // in case `Command::Quit` is received (that's when we should quit.)
             let mut error_in_pruning = false;
             let mut ledger_db_batch = SchemaBatch::new();
-            for db_pruner_option in &self.db_pruners {
-                if let Some(db_pruner) = db_pruner_option {
-                    let result = db_pruner
-                        .lock()
-                        .prune(&mut ledger_db_batch, self.max_version_to_prune_per_batch);
-                    result.map_err(|_| error_in_pruning = true).ok();
-                }
+            for db_pruner in self.db_pruners.iter().flatten() {
+                let result = db_pruner
+                    .lock()
+                    .prune(&mut ledger_db_batch, self.max_version_to_prune_per_batch);
+                result.map_err(|_| error_in_pruning = true).ok();
             }
             // Commit all the changes to DB atomically
             self.ledger_db
@@ -68,12 +66,10 @@ impl Worker {
                 .map_err(|_| error_in_pruning = true)
                 .ok();
             let mut pruning_pending = false;
-            for db_pruner_option in &self.db_pruners {
-                if let Some(db_pruner) = db_pruner_option {
-                    // if any of the pruner has pending pruning, then we don't block on receive
-                    if db_pruner.lock().is_pruning_pending() {
-                        pruning_pending = true;
-                    }
+            for db_pruner in self.db_pruners.iter().flatten() {
+                // if any of the pruner has pending pruning, then we don't block on receive
+                if db_pruner.lock().is_pruning_pending() {
+                    pruning_pending = true;
                 }
             }
             if !pruning_pending || error_in_pruning {
@@ -87,10 +83,8 @@ impl Worker {
 
     fn record_progress(&mut self) {
         let mut updated_min_readable_versions: Vec<Option<Version>> = Vec::new();
-        for pruner_option in &self.db_pruners {
-            if let Some(pruner) = pruner_option {
-                updated_min_readable_versions.push(Some(pruner.lock().min_readable_version()))
-            }
+        for pruner in self.db_pruners.iter().flatten() {
+            updated_min_readable_versions.push(Some(pruner.lock().min_readable_version()))
         }
         *self.min_readable_versions.lock() = updated_min_readable_versions;
     }

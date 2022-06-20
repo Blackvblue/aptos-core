@@ -1471,11 +1471,9 @@ impl DbWriter for AptosDB {
             let target_version = 1; // The genesis version is 0. Delete [0,1) (exclusive).
             let max_version = 1; // We should only really be pruning at a single version.
             let mut db_batch = SchemaBatch::new();
-            for db_pruner_option in db_pruners {
-                if let Some(db_pruner) = db_pruner_option {
-                    db_pruner.lock().set_target_version(target_version);
-                    db_pruner.lock().prune(&mut db_batch, max_version)?;
-                }
+            for db_pruner in db_pruners.into_iter().flatten() {
+                db_pruner.lock().set_target_version(target_version);
+                db_pruner.lock().prune(&mut db_batch, max_version)?;
             }
             self.ledger_db.write_schemas(db_batch)
         })
