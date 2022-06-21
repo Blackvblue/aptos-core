@@ -31,9 +31,11 @@ fn put_value_set(
         .collect();
     let jmt_updates = jmt_updates(&value_set);
 
-    let root = state_store
+    let (root, batch) = state_store
         .merklize_value_set(jmt_update_refs(&jmt_updates), None, version, base_version)
         .unwrap();
+    state_store.commit_state_merkle_db(batch).unwrap();
+
     let mut cs = ChangeSet::new();
     state_store
         .put_value_sets(vec![&value_set], version, &mut cs)
@@ -634,7 +636,7 @@ fn update_store(
         let value_state_set = vec![(key, value)].into_iter().collect();
         let jmt_updates = jmt_updates(&value_state_set);
         let version = first_version + i as Version;
-        store
+        let (_root, batch) = store
             .merklize_value_set(
                 jmt_update_refs(&jmt_updates),
                 None,
@@ -642,6 +644,8 @@ fn update_store(
                 version.checked_sub(1),
             )
             .unwrap();
+        store.commit_state_merkle_db(batch).unwrap();
+
         let mut cs = ChangeSet::new();
         store
             .put_value_sets(vec![&value_state_set], version, &mut cs)

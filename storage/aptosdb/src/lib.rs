@@ -1247,12 +1247,14 @@ impl DbWriter for AptosDB {
         base_version: Option<Version>,
     ) -> Result<()> {
         gauged_api("save_state_snapshot", || {
-            let root_hash = *self.state_store.merklize_value_set(
+            let (root_hash, batch) = self.state_store.merklize_value_set(
                 jmt_update_refs(&jmt_updates),
                 node_hashes,
                 version,
                 base_version,
             )?;
+            self.state_store.commit_state_merkle_db(batch)?;
+
             debug!(
                 version = version,
                 base_version = base_version,

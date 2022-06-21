@@ -245,7 +245,7 @@ impl StateStore {
         node_hashes: Option<&HashMap<NibblePath, HashValue>>,
         version: Version,
         base_version: Option<Version>,
-    ) -> Result<HashValue> {
+    ) -> Result<(HashValue, SchemaBatch)> {
         let (mut new_root_hash_vec, tree_update_batch) = JellyfishMerkleTree::new(self)
             .batch_put_value_sets(
                 vec![value_set],
@@ -263,10 +263,11 @@ impl StateStore {
             .map(|row| batch.put::<StaleNodeIndexSchema>(row, &()))
             .collect::<Result<Vec<()>>>()?;
 
-        // commit jellyfish merkle nodes
-        self.state_merkle_db.write_schemas(batch)?;
+        Ok((new_root_hash_vec.pop().unwrap(), batch))
+    }
 
-        Ok(new_root_hash_vec.pop().unwrap())
+    pub fn commit_state_merkle_db(&self, batch: SchemaBatch) -> Result<()> {
+        self.state_merkle_db.write_schemas(batch)
     }
 
     pub fn get_root_hash(&self, version: Version) -> Result<HashValue> {

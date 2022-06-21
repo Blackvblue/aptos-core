@@ -22,7 +22,7 @@ fn put_value_set(
         .collect();
     let jmt_updates = jmt_updates(&value_set);
 
-    let root = state_store
+    let (root, batch) = state_store
         .merklize_value_set(
             jmt_update_refs(&jmt_updates),
             None,
@@ -30,6 +30,7 @@ fn put_value_set(
             version.checked_sub(1),
         )
         .unwrap();
+    state_store.commit_state_merkle_db(batch).unwrap();
 
     let mut cs = ChangeSet::new();
     state_store
