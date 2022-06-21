@@ -1,6 +1,7 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::quorum_store::batch_reader::BatchReader;
 use crate::quorum_store::quorum_store::{QuorumStore, QuorumStoreCommand, QuorumStoreConfig};
 use crate::quorum_store::quorum_store_db::QuorumStoreDB;
 use crate::quorum_store::quorum_store_wrapper::QuorumStoreWrapper;
@@ -336,16 +337,10 @@ impl EpochManager {
     ///this function spawns QuorumStore
     fn spawn_quorum_store(
         &mut self,
+        network_sender: NetworkSender,
         verifier: ValidatorVerifier,
         wrapper_command_rx: tokio::sync::mpsc::Receiver<QuorumStoreCommand>,
-    ) {
-        let network_sender = NetworkSender::new(
-            self.author,
-            self.network_sender.clone(),
-            self.self_sender.clone(),
-            verifier.clone(),
-        );
-
+    ) -> Arc<BatchReader> {
         let backend = &self.config.safety_rules.backend;
         let storage: Storage = backend.try_into().expect("Unable to initialize storage");
         if let Err(error) = storage.available() {
@@ -396,7 +391,7 @@ impl EpochManager {
             db_quota: 10000000000,
         };
 
-        let (quorum_store, _batch_reader) = QuorumStore::new(
+        let (quorum_store, batch_reader) = QuorumStore::new(
             self.epoch(),
             last_committed_round,
             self.author,
@@ -413,15 +408,23 @@ impl EpochManager {
 
         //TODO: how do we drop these tokio spawns?
         //TODO: return (quorum_store_msg_tx, batch_reader)
+        batch_reader
     }
 
     fn spawn_quorum_wrapper(
         &mut self,
+        batch_reader: Arc<BatchReader>,
+        network_sender: NetworkSender,
         consensus_to_quorum_store_receiver: Receiver<ConsensusRequest>,
+        wrapper_to_quorum_store_sender: tokio::sync::mpsc::Sender<QuorumStoreCommand>,
     ) {
         let quorum_store_wrapper = QuorumStoreWrapper::new(
+            self.epoch(),
+            batch_reader,
             consensus_to_quorum_store_receiver,
             self.quorum_store_to_mempool_sender.clone(),
+            wrapper_to_quorum_store_sender,
+            network_sender,
             self.config.mempool_txn_pull_timeout_ms,
         );
         tokio::spawn(quorum_store_wrapper.start());
@@ -551,10 +554,19 @@ impl EpochManager {
             mpsc::channel(self.config.intra_consensus_channel_buffer_size);
         if self.config.use_quorum_store {
             //TODO: create channels between quorum_store, execution, and wrapper and pass around.
-            let (_wrapper_quorum_store_tx, wrapper_quorum_store_rx) =
+            let (wrapper_quorum_store_tx, wrapper_quorum_store_rx) =
                 tokio::sync::mpsc::channel(100);
-            self.spawn_quorum_store(epoch_state.verifier.clone(), wrapper_quorum_store_rx);
-            self.spawn_quorum_wrapper(consensus_to_quorum_store_receiver);
+            let batch_reader = self.spawn_quorum_store(
+                network_sender.clone(),
+                epoch_state.verifier.clone(),
+                wrapper_quorum_store_rx,
+            );
+            self.spawn_quorum_wrapper(
+                batch_reader,
+                network_sender.clone(),
+                consensus_to_quorum_store_receiver,
+                wrapper_quorum_store_tx,
+            );
         } else {
             self.spawn_direct_mempool_quorum_store(consensus_to_quorum_store_receiver);
         }

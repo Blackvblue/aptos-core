@@ -49,7 +49,10 @@ impl PersistRequest {
 
 #[derive(Debug)]
 pub(crate) enum BatchStoreCommand {
-    Persist(PersistRequest, Option<oneshot::Sender<SignedDigest>>),
+    Persist(
+        PersistRequest,
+        Option<futures::channel::oneshot::Sender<SignedDigest>>,
+    ),
     BatchRequest(HashValue, PeerId, Option<oneshot::Sender<Data>>),
     Clean(Vec<HashValue>),
 }

@@ -21,16 +21,14 @@ use aptos_types::{
 use channel::aptos_channel;
 use consensus_types::common::Round;
 use consensus_types::proof_of_store::{LogicalTime, ProofOfStore, SignedDigest};
+use futures::channel::oneshot;
 use futures::{
     future::BoxFuture,
     stream::{futures_unordered::FuturesUnordered, StreamExt as _},
 };
 use std::collections::HashMap;
 use std::sync::{mpsc::sync_channel, Arc};
-use tokio::sync::{
-    mpsc::{channel, Receiver, Sender},
-    oneshot,
-};
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 pub type ProofReturnChannel = oneshot::Sender<Result<ProofOfStore, QuorumStoreError>>;
 
