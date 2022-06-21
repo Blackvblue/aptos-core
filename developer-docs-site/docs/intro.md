@@ -17,7 +17,8 @@ Click [here for the Aptos Incentivized Testnet-2 program](tutorials/validator-no
 ## Start here
 
 <div class="docs-card-container">
-<div class="row row-cols-4 row-cols-md-2a g-4 gap-sm-1">
+<div class="container">
+<div class="row row-cols-1 row-cols-md-2a g-4">
   <div class="col">
     <div class="card card-body h-100 d-flex flex-column">
     <a href="#" class="card-title card-link stretched-link"> <h2>New to Aptos?</h2></a>
@@ -38,12 +39,14 @@ Click [here for the Aptos Incentivized Testnet-2 program](tutorials/validator-no
 </div>
 </div>
 </div>
+</div>
 
 
 ## Concepts and guides
 
 <div class="docs-card-container">
-<div class="row row-cols-4 row-cols-md-2a g-4 gap-sm-1">
+<div class="container">
+<div class="row row-cols-1 row-cols-md-2a g-4">
   <div class="col">
     <div class="card card-body h-100 d-flex flex-column">
     <a href="#" class="card-title card-link stretched-link"> <h2>Concepts</h2></a>
@@ -64,11 +67,13 @@ Click [here for the Aptos Incentivized Testnet-2 program](tutorials/validator-no
 </div>
 </div>
 </div>
+</div>
 
 ## Nodes
 
 <div class="docs-card-container">
-<div class="row row-cols-4 row-cols-md-2a g-4 gap-sm-1">
+<div class="container">
+<div class="row row-cols-1 row-cols-md-2a g-4">
   <div class="col">
     <div class="card card-body h-100 d-flex flex-column" >
     <a href="#" class="card-title card-link stretched-link"> <h2>Run a Validator or a FullNode</h2></a>
@@ -89,21 +94,28 @@ Click [here for the Aptos Incentivized Testnet-2 program](tutorials/validator-no
 </div>
 </div>
 </div>
+</div>
 
 ## SDKs and APIs
 
 <div class="docs-card-container">
-<div class="row row-cols-4 row-cols-md-3a g-4 gap-sm-1">
+<div class="container">
+<div class="row row-cols-1 row-cols-md-3a g-4">
   <div class="col">
-    <div class="card card-body h-100 d-flex flex-column" >
+    <div class="card h-100" >
+    <div class="card-body d-flex flex-column" >
     <a href="#" class="card-title card-link stretched-link"> <h2>Typescript SDK</h2></a>
     <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
 </div>
 </div>
+</div>
   <div class="col">
-    <div class="card card-body h-100 d-flex flex-column"  >
+  <div class="card h-100" >
+    <div class="card-body d-flex flex-column"  >
     <a href="#" class="card-title card-link stretched-link"> <h2>REST API</h2></a>
     <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante..</p>
+</div>
+</div>
 </div>
 </div>
 </div>
