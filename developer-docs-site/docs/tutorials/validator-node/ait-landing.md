@@ -100,6 +100,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
 ## Setting up a node for AIT-2 (DRAFT)
 
 <div class="docs-card-container">
+<div class="container">
 <div class="row row-cols-1 row-cols-md-3 g-4">
   <div class="col">
     <div class="card h-100">
@@ -117,7 +118,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
       </div>
     </div>
   </div>
-  <div class="col">
+  <div class="col" >
     <div class="card h-100">
      <h3 class="card-header">Step 2</h3>
       <div class="card-body d-flex flex-column">
@@ -127,7 +128,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
     </div>
   </div>
   <div class="col">
-    <div class="card h-100">   
+    <div class="card h-100">  
     <h3 class="card-header">Step 3</h3>
       <div class="card-body d-flex flex-column">
         <h3 class="card-title">Check the node health</h3>
@@ -137,7 +138,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
   </div>
 </div>
 <br />
-<div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="row row-cols-1 row-cols-md-3 g-4 ">
   <div class="col">
     <div class="card h-100">
     <h3 class="card-header">Step 4</h3>
@@ -171,6 +172,7 @@ To participate in the Aptos Incentivized Testnet-2 (AIT-2) program, follow the b
       </div>
     </div>
   </div>
+</div>
 </div>
 </div>
 </div>
