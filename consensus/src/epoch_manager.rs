@@ -207,6 +207,7 @@ impl EpochManager {
                     self.author,
                     heuristic_config.active_weights,
                     heuristic_config.inactive_weights,
+                    proposers.len(),
                 ));
                 let proposer_election = Box::new(LeaderReputation::new(
                     epoch_state.epoch,
