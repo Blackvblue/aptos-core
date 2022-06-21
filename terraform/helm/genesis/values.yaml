@@ -18,6 +18,9 @@ genesis:
   username_prefix: aptos-node
   validator_host_suffix: validator-lb
   fullnode_host_suffix: fullnode-lb
+  # The path or move modules in the docker image to pull
+  # Defaults to the aptos-framework in the aptoslabs/init docker image
+  moveModulesDir: /aptos-framework/move/modules
 
 serviceAccount:
   # Specifies whether a service account should be created

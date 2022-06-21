@@ -40,7 +40,7 @@ async fn wait_genesis_job(kube_client: &K8sClient, era: &str) -> Result<()> {
     aptos_retrier::retry_async(k8s_wait_genesis_strategy(), || {
         let jobs: Api<Job> = Api::namespaced(kube_client.clone(), "default");
         Box::pin(async move {
-            let job_name = format!("aptos-testnet-genesis-e{}", era);
+            let job_name = format!("genesis-aptos-genesis-e{}", era);
             debug!("Running get job: {}", &job_name);
             let genesis_job = jobs.get_status(&job_name).await.unwrap();
             debug!("Status: {:?}", genesis_job.status);
@@ -58,16 +58,16 @@ async fn wait_genesis_job(kube_client: &K8sClient, era: &str) -> Result<()> {
 }
 
 pub fn set_validator_image_tag(
-    validator_name: &str,
-    image_tag: &str,
-    helm_repo: &str,
+    validator_name: String,
+    image_tag: String,
+    helm_repo: String,
 ) -> Result<()> {
-    let validator_upgrade_options = [
-        "--reuse-values",
-        "--history-max",
-        "2",
-        "--set",
-        &format!("imageTag={}", image_tag),
+    let validator_upgrade_options = vec![
+        "--reuse-values".to_string(),
+        "--history-max".to_string(),
+        "2".to_string(),
+        "--set".to_string(),
+        format!("imageTag={}", image_tag),
     ];
     upgrade_validator(validator_name, helm_repo, &validator_upgrade_options)
 }
@@ -98,6 +98,8 @@ pub(crate) async fn delete_k8s_cluster() -> Result<()> {
     let deployments: Api<Deployment> = Api::namespaced(client.clone(), "default");
     let stateful_sets: Api<StatefulSet> = Api::namespaced(client, "default");
 
+    // delete all deployments and statefulsets
+    // cross this with all the compute resources created by aptos-node helm chart
     delete_k8s_collection(deployments, "deployments").await?;
     delete_k8s_collection(stateful_sets, "stateful_sets").await?;
 
@@ -130,8 +132,12 @@ fn helm_release_patch(release_name: &str, version: usize) -> Result<()> {
     Ok(())
 }
 
-fn upgrade_helm_release(release_name: &str, helm_chart: &str, options: &[&str]) -> Result<()> {
-    let upgrade_base_args = ["upgrade", release_name, helm_chart];
+fn upgrade_helm_release(
+    release_name: String,
+    helm_chart: String,
+    options: &[String],
+) -> Result<()> {
+    let upgrade_base_args = ["upgrade".to_string(), release_name, helm_chart];
     let upgrade_args = [&upgrade_base_args, options].concat();
     println!("{:?}", upgrade_args);
     let upgrade_output = Command::new(HELM_BIN)
@@ -154,16 +160,22 @@ fn upgrade_helm_release(release_name: &str, helm_chart: &str, options: &[&str]) 
     Ok(())
 }
 
-fn upgrade_validator(validator_name: &str, helm_repo: &str, options: &[&str]) -> Result<()> {
+fn upgrade_validator(validator_name: String, helm_repo: String, options: &[String]) -> Result<()> {
     upgrade_helm_release(
         validator_name,
-        &format!("{}/aptos-validator", helm_repo),
+        format!("{}/aptos-validator", helm_repo),
         options,
     )
 }
 
-fn upgrade_testnet(helm_repo: &str, options: &[&str]) -> Result<()> {
-    upgrade_helm_release("aptos", &format!("{}/testnet", helm_repo), options)
+// runs helm upgrade on the installed aptos-genesis release named "genesis"
+// if a new "era" is specified, a new genesis will be created, and old resources will be destroyed
+fn upgrade_genesis_helm(helm_repo: &str, options: &[String]) -> Result<()> {
+    upgrade_helm_release(
+        "genesis".to_string(),
+        format!("{}/aptos-genesis", helm_repo),
+        options,
+    )
 }
 
 fn get_helm_status(helm_release_name: &str) -> Result<Value> {
@@ -185,18 +197,15 @@ fn get_helm_values(helm_release_name: &str) -> Result<Value> {
     Ok(v["config"].take())
 }
 
-pub async fn uninstall_from_k8s_cluster() -> Result<()> {
-    // helm uninstall validators while keeping history for later
+pub async fn uninstall_testnet_resources() -> Result<()> {
+    // delete kubernetes resources
     delete_k8s_cluster().await?;
-    println!("All validators removed");
+    println!("aptos-node resources removed");
 
-    // NOTE: for now, do not remove testnet helm chart since it is more expensive
-    // remove_helm_release("aptos").unwrap();
-    // println!("Testnet release removed");
     Ok(())
 }
 
-pub async fn clean_k8s_cluster(
+pub async fn reinstall_testnet_resources(
     helm_repo: String,
     base_num_validators: usize,
     base_validator_image_tag: String,
@@ -207,105 +216,34 @@ pub async fn clean_k8s_cluster(
     assert!(base_num_validators <= MAX_NUM_VALIDATORS);
 
     let new_era = get_new_era().unwrap();
+    let kube_client = create_k8s_client().await;
 
-    let tmp_dir = TempDir::new().expect("Could not create temp dir");
+    // just helm upgrade
 
-    // prepare for scale up. get the helm values to upgrade later
-    (0..base_num_validators).into_par_iter().for_each(|i| {
-        let v: Value = get_helm_status(&format!("val{}", i)).unwrap();
-        let version = v["version"].as_i64().expect("not a i64") as usize;
-        let config = &v["config"];
-
-        let era: &str = &era_to_string(&v["config"]["chain"]["era"]).unwrap();
-        assert!(
-            !&new_era.eq(era),
-            "New era {} is the same as past release era {}",
-            new_era,
-            era
-        );
-
-        // store the helm values for later use
-        let file_path = tmp_dir.path().join(format!("val{}_status.json", i));
-        println!("Wrote helm values to: {:?}", &file_path);
-        let mut file = File::create(file_path).expect("Could not create file in temp dir");
-        file.write_all(&config.to_string().into_bytes())
-            .expect("Could not write to file");
-
-        helm_release_patch(&format!("val{}", i), version).unwrap();
-    });
-    println!("All validators prepare for upgrade");
-
-    // upgrade validators in parallel
-    (0..base_num_validators).into_par_iter().for_each(|i| {
-        let file_path = tmp_dir
-            .path()
-            .join(format!("val{}_status.json", i))
-            .display()
-            .to_string();
-        let validator_upgrade_options = [
-            "-f",
-            &file_path,
-            "--install",
-            "--history-max",
-            "2",
-            "--set",
-            &format!("chain.era={}", &new_era),
-            "--set",
-            &format!("imageTag={}", &base_validator_image_tag),
-        ];
-        upgrade_validator(&format!("val{}", i), &helm_repo, &validator_upgrade_options).unwrap();
-    });
-    println!("All validators upgraded");
-
-    // get testnet values
-    let v: Value = get_helm_status("aptos").unwrap();
-    let version = v["version"].as_i64().expect("not a i64") as usize;
-    let config = &v["config"];
-
-    // prep testnet chart for release
-    helm_release_patch("aptos", version).unwrap();
-
-    // store the helm values for later use
-    let file_path = tmp_dir.path().join("aptos_status.json");
-    println!("Wrote helm values to: {:?}", &file_path);
-    let mut file = File::create(file_path).expect("Could not create file in temp dir");
-    file.write_all(&config.to_string().into_bytes())
-        .expect("Could not write to file");
-    let file_path_str = tmp_dir
-        .path()
-        .join("aptos_status.json")
-        .display()
-        .to_string();
-
-    // run genesis from the directory in aptos/init image
-    let move_modules_dir = if let Some(genesis_modules_path) = genesis_modules_path {
-        genesis_modules_path
-    } else {
-        GENESIS_MODULES_DIR.to_string()
-    };
-    let testnet_upgrade_options = [
-        "-f",
-        &file_path_str,
-        "--install",
-        "--history-max",
-        "2",
-        "--set",
-        &format!("genesis.era={}", &new_era),
-        "--set",
-        &format!("genesis.numValidators={}", base_num_validators),
-        "--set",
-        &format!("imageTag={}", &base_genesis_image_tag),
-        "--set",
-        "monitoring.prometheus.useHttps=false",
-        "--set",
-        &format!("genesis.moveModuleDir={}", &move_modules_dir),
+    let mut genesis_upgrade_options = vec![
+        "--reuse-values".to_string(),
+        "--history-max".to_string(),
+        "2".to_string(),
+        "--set".to_string(),
+        format!("chain.era={}", &new_era),
+        "--set".to_string(),
+        format!("numValidators={}", base_num_validators),
+        "--set".to_string(),
+        format!("imageTag={}", &base_genesis_image_tag),
     ];
 
+    // run genesis from the directory in aptos/init image
+    if let Some(genesis_modules_path) = genesis_modules_path {
+        genesis_upgrade_options.extend([
+            "--set".to_string(),
+            format!("genesis.moveModulesDir={}", genesis_modules_path).to_string(),
+        ]);
+    }
+
     // upgrade testnet
-    upgrade_testnet(&helm_repo, &testnet_upgrade_options)?;
+    upgrade_genesis_helm(&helm_repo, genesis_upgrade_options.as_slice())?;
 
     // wait for genesis to run again, and get the updated validators
-    let kube_client = create_k8s_client().await;
     wait_genesis_job(&kube_client, &new_era).await.unwrap();
     let vals = get_validators(kube_client.clone(), &base_validator_image_tag)
         .await

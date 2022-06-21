@@ -98,6 +98,8 @@ spec:
           value: {{ .Values.genesis.username_prefix | quote }}
         - name: ERA
           value: {{ .Values.chain.era | quote }}
+        - name: MOVE_MODULES_DIR
+          value: {{ .Values.genesis.moveModulesDir | quote }}
         volumeMounts:
         - name: layout
           mountPath: /tmp/layout.yaml

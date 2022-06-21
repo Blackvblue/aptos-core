@@ -185,10 +185,10 @@ fn main() -> Result<()> {
                 &set_validator.image_tag,
                 &set_validator.helm_repo,
             ),
-            OperatorCommand::CleanUp(_) => runtime.block_on(uninstall_from_k8s_cluster()),
+            OperatorCommand::CleanUp(_) => runtime.block_on(uninstall_testnet_resources()),
             OperatorCommand::Resize(resize) => {
-                runtime.block_on(uninstall_from_k8s_cluster())?;
-                runtime.block_on(clean_k8s_cluster(
+                runtime.block_on(uninstall_testnet_resources())?;
+                runtime.block_on(reinstall_testnet_resources(
                     resize.helm_repo,
                     resize.num_validators,
                     resize.validator_image_tag,

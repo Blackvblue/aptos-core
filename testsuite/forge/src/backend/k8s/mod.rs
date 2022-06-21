@@ -4,7 +4,7 @@
 use crate::{Factory, GenesisConfig, Result, Swarm, Version};
 use anyhow::bail;
 use rand::rngs::StdRng;
-use std::{num::NonZeroUsize, convert::TryInto};
+use std::{convert::TryInto, num::NonZeroUsize};
 
 mod cluster_helper;
 mod node;
@@ -27,8 +27,8 @@ const DEFAULT_ROOT_KEY: &str = "5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7e
 
 impl K8sFactory {
     pub fn new(helm_repo: String, image_tag: String, base_image_tag: String) -> Result<K8sFactory> {
-
-        let root_key: [u8; ED25519_PRIVATE_KEY_LENGTH] = hex::decode(DEFAULT_ROOT_KEY)?.try_into().unwrap();
+        let root_key: [u8; ED25519_PRIVATE_KEY_LENGTH] =
+            hex::decode(DEFAULT_ROOT_KEY)?.try_into().unwrap();
 
         Ok(Self {
             root_key,
@@ -67,8 +67,8 @@ impl Factory for K8sFactory {
             None => None,
         };
 
-        uninstall_from_k8s_cluster().await?;
-        let era = clean_k8s_cluster(
+        uninstall_testnet_resources().await?;
+        let era = reinstall_testnet_resources(
             self.helm_repo.clone(),
             node_num.get(),
             format!("{}", init_version),
