@@ -21,7 +21,7 @@ full_node_networks:
       discovery_method: "onchain"
       # The network must have a listen address to specify protocols. This runs it locally to
       # prevent remote, incoming connections.
-      listen_address: "/ip4/127.0.0.1/tcp/6180"
+      listen_address: "/ip4/0.0.0.0/tcp/6180"
       # Define the upstream peers to connect to
       seeds:
         {}
